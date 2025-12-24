@@ -15,7 +15,7 @@ export const ScratchCard: React.FC<ScratchCardProps> = ({ id, isLocked, prize, o
     const containerRef = useRef<HTMLDivElement>(null);
     const [isRevealed, setIsRevealed] = useState(false);
     const [isScratching, setIsScratching] = useState(false);
-    const [isReady, setIsReady] = useState(false); // New state to prevent prize flicker
+    const [isReady, setIsReady] = useState(false);
 
     // Watch for forceReveal prop
     useEffect(() => {
@@ -36,12 +36,24 @@ export const ScratchCard: React.FC<ScratchCardProps> = ({ id, isLocked, prize, o
         const container = containerRef.current;
         if (!canvas || !container) return;
 
+        let attempt = 0;
+        const maxAttempts = 20; // Try for ~2 seconds max
+
         const initCanvas = () => {
             if (isRevealed) return;
 
             const width = container.offsetWidth;
             const height = container.offsetHeight;
             
+            // Critical Fix: Wait for layout to be stable and non-zero (modal animation support)
+            if (width === 0 || height === 0) {
+                if (attempt < maxAttempts) {
+                    attempt++;
+                    setTimeout(initCanvas, 100);
+                }
+                return;
+            }
+
             canvas.width = width;
             canvas.height = height;
 
@@ -82,20 +94,28 @@ export const ScratchCard: React.FC<ScratchCardProps> = ({ id, isLocked, prize, o
             
             ctx.shadowBlur = 0;
             
-            // Mark as ready only after paint is done
-            setIsReady(true);
+            // Only reveal prize AFTER the cover is painted
+            requestAnimationFrame(() => {
+                setIsReady(true);
+            });
         };
 
-        // Small timeout to ensure container has layout
+        // Initialize with a small delay to allow DOM render
         const timeout = setTimeout(initCanvas, 50);
-        window.addEventListener('resize', initCanvas);
+        
+        const handleResize = () => {
+            setIsReady(false); // Hide prize while resizing
+            initCanvas();
+        };
+        
+        window.addEventListener('resize', handleResize);
 
         return () => {
             clearTimeout(timeout);
-            window.removeEventListener('resize', initCanvas);
+            window.removeEventListener('resize', handleResize);
         };
 
-    }, [isLocked, isRevealed]); 
+    }, [isLocked, isRevealed, id]); // Added ID to force repaint on new card
 
     const handleStart = () => setIsScratching(true);
     const handleEnd = () => setIsScratching(false);
@@ -124,7 +144,7 @@ export const ScratchCard: React.FC<ScratchCardProps> = ({ id, isLocked, prize, o
 
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
-        ctx.arc(x, y, 20, 0, Math.PI * 2); // Increased brush size
+        ctx.arc(x, y, 25, 0, Math.PI * 2); // Increased brush size slightly
         ctx.fill();
         
         checkScratchPercentage();
@@ -136,10 +156,13 @@ export const ScratchCard: React.FC<ScratchCardProps> = ({ id, isLocked, prize, o
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        // Optimization: check a smaller sample of pixels
+        const width = canvas.width;
+        const height = canvas.height;
+        const imageData = ctx.getImageData(0, 0, width, height);
         const pixels = imageData.data;
         let transparentPixels = 0;
-        const step = 32; 
+        const step = 64; // Check fewer pixels for performance
         const totalPixelsToCheck = pixels.length / step;
 
         for (let i = 0; i < pixels.length; i += step) {
@@ -148,19 +171,27 @@ export const ScratchCard: React.FC<ScratchCardProps> = ({ id, isLocked, prize, o
             }
         }
 
-        if ((transparentPixels / totalPixelsToCheck) * 100 > 40) { 
-            setIsRevealed(true);
+        if ((transparentPixels / totalPixelsToCheck) * 100 > 35) { // Lower threshold slightly
+            reveal();
+        }
+    };
+
+    const reveal = () => {
+        if (isRevealed) return;
+        setIsRevealed(true);
+        const canvas = canvasRef.current;
+        if (canvas) {
             canvas.style.transition = 'opacity 0.3s ease-out';
             canvas.style.opacity = '0';
             canvas.style.pointerEvents = 'none';
-            onScratchComplete();
         }
+        onScratchComplete();
     };
 
     return (
         <div ref={containerRef} className={`relative bg-white overflow-hidden shadow-inner transform transition-transform select-none ${className} ${isRevealed ? 'bg-indigo-50' : 'bg-slate-200'}`}>
             {/* O Prêmio - Only visible when canvas is ready (painted) */}
-            <div className={`absolute inset-0 flex items-center justify-center p-2 text-center transition-opacity duration-300 ${isReady ? 'opacity-100' : 'opacity-0'} ${isRevealed ? 'animate-in zoom-in duration-300' : ''}`}>
+            <div className={`absolute inset-0 flex items-center justify-center p-2 text-center transition-opacity duration-300 z-10 ${isReady ? 'opacity-100' : 'opacity-0'} ${isRevealed ? 'animate-in zoom-in duration-300' : ''}`}>
                 {prize}
             </div>
 
@@ -175,6 +206,7 @@ export const ScratchCard: React.FC<ScratchCardProps> = ({ id, isLocked, prize, o
             <canvas
                 ref={canvasRef}
                 className={`absolute inset-0 z-20 touch-none cursor-crosshair ${isRevealed ? 'opacity-0' : 'opacity-100'}`}
+                style={{ transition: 'opacity 0.5s' }}
                 onMouseDown={handleStart}
                 onMouseUp={handleEnd}
                 onMouseLeave={handleEnd}
