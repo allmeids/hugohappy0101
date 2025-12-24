@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from './Modal';
 import { ScratchCard } from './ScratchCard';
 import { IMAGES, SOUNDS } from '../constants';
-import { Skull, Gem, Gift, PartyPopper, Frown, Gamepad2, Ticket, Heart, Zap, Clover, Wand2 } from 'lucide-react';
+import { Skull, Gem, Gift, PartyPopper, Frown, Gamepad2, Ticket, Heart, Zap, Clover, Wand2, Crown } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface ScratchGameModalProps {
@@ -48,19 +48,19 @@ const STAGES = [
     },
     {
         id: 3,
-        title: "Cartela Final: O VOUCHER",
-        instruction: "Ache 3 Logos do XBOX (R$ 60)",
-        // 3 Xbox logos = WIN
+        title: "Cartela Final: O MISTÉRIO",
+        instruction: "Encontre 3 Coroas Douradas para liberar o presente secreto!",
+        // 3 Crowns = WIN (Prize revealed in VictoryModal)
         symbols: [
-            { icon: <img src={IMAGES.VOUCHER} className="w-10 h-10 object-contain" alt="Xbox Logo" />, id: 'win1' },
-            { icon: <img src={IMAGES.VOUCHER} className="w-10 h-10 object-contain" alt="Xbox Logo" />, id: 'win2' },
-            { icon: <img src={IMAGES.VOUCHER} className="w-10 h-10 object-contain" alt="Xbox Logo" />, id: 'win3' }, // 3rd match!
+            { icon: <Crown className="text-yellow-400 w-10 h-10" />, id: 'win1' },
+            { icon: <Crown className="text-yellow-400 w-10 h-10" />, id: 'win2' },
+            { icon: <Crown className="text-yellow-400 w-10 h-10" />, id: 'win3' }, // 3rd match!
             { icon: <Heart className="text-red-500 w-10 h-10" />, id: 's4' },
             { icon: <Zap className="text-yellow-500 w-10 h-10" />, id: 's5' },
             { icon: <Clover className="text-green-500 w-10 h-10" />, id: 's6' },
         ],
         resultMessage: "VOCÊ GANHOU!!!",
-        buttonText: "Resgatar Prêmio",
+        buttonText: "Ver Prêmio Secreto",
         isWin: true
     }
 ];
