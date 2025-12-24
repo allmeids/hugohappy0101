@@ -19,13 +19,15 @@ export const FlappyGame: React.FC<FlappyGameProps> = ({ onComplete }) => {
   const PIPE_SPEED = 2.5;
   const PIPE_SPAWN_RATE = 120;
   
-  const birdRef = useRef({ x: 50, y: 200, velocity: 0, rotation: 0 });
+  // Starting position higher up (y: 100 instead of 200)
+  const birdRef = useRef({ x: 50, y: 100, velocity: 0, rotation: 0 });
   const pipesRef = useRef<{x: number, topHeight: number, passed: boolean}[]>([]);
   const frameRef = useRef(0);
   const animRef = useRef(0);
 
   const resetGame = () => {
-    birdRef.current = { x: 50, y: 200, velocity: 0, rotation: 0 };
+    // Starting position higher up
+    birdRef.current = { x: 50, y: 100, velocity: 0, rotation: 0 };
     pipesRef.current = [];
     frameRef.current = 0;
     setScore(0);

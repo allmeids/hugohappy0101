@@ -195,9 +195,13 @@ export const SnakeGame: React.FC<SnakeGameProps> = ({ onComplete }) => {
   useEffect(() => {
       const resize = () => {
           if(canvasRef.current && containerRef.current) {
-              const width = Math.min(containerRef.current.clientWidth, 400);
-              canvasRef.current.width = width;
-              canvasRef.current.height = width;
+              const maxWidth = Math.min(containerRef.current.clientWidth, 400);
+              // Limit height to 60% of viewport to avoid scrolling in modal
+              const maxHeight = window.innerHeight * 0.6;
+              const size = Math.min(maxWidth, maxHeight);
+              
+              canvasRef.current.width = size;
+              canvasRef.current.height = size;
               draw();
           }
       };
@@ -240,7 +244,7 @@ export const SnakeGame: React.FC<SnakeGameProps> = ({ onComplete }) => {
             <span className="retro-font text-emerald-400 text-lg">SCORE: {score}</span>
         </div>
         
-        <div className="relative w-full flex justify-center p-4">
+        <div className="relative w-full flex justify-center p-2">
             <canvas ref={canvasRef} className="bg-slate-900 rounded-lg shadow-inner border border-slate-700" />
             
             {!isPlaying && !gameOver && (

@@ -55,7 +55,6 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({ isOpen, onClose }) =
 
         <div className="flex items-center gap-2 text-sm text-slate-400">
           <PartyPopper size={16} className="text-pink-500" />
-          <span>Tire um print e mande no grupo!</span>
           <Trophy size={16} className="text-yellow-500" />
         </div>
       </div>
