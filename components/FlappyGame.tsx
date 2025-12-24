@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { SOUNDS, COLORS } from '../constants';
+import { SOUNDS } from '../constants';
 import { Play, RotateCcw } from 'lucide-react';
 
 interface FlappyGameProps {
@@ -13,21 +13,19 @@ export const FlappyGame: React.FC<FlappyGameProps> = ({ onComplete }) => {
   const [gameOver, setGameOver] = useState(false);
   const [score, setScore] = useState(0);
 
-  // Game Constants
-  const GRAVITY = 0.4;
-  const JUMP = -7;
-  const PIPE_SPEED = 2.5;
-  const PIPE_SPAWN_RATE = 120;
+  // Game Constants - Tuned for 60fps
+  const GRAVITY = 0.5; // Slightly stronger gravity for snap
+  const JUMP = -8; // Stronger jump
+  const PIPE_SPEED = 3; // Faster scroll
+  const PIPE_SPAWN_RATE = 100; // More frequent pipes
   
-  // Starting position higher up (y: 100 instead of 200)
-  const birdRef = useRef({ x: 50, y: 100, velocity: 0, rotation: 0 });
+  const birdRef = useRef({ x: 50, y: 150, velocity: 0, rotation: 0 });
   const pipesRef = useRef<{x: number, topHeight: number, passed: boolean}[]>([]);
   const frameRef = useRef(0);
   const animRef = useRef(0);
 
   const resetGame = () => {
-    // Starting position higher up
-    birdRef.current = { x: 50, y: 100, velocity: 0, rotation: 0 };
+    birdRef.current = { x: 50, y: 150, velocity: 0, rotation: 0 };
     pipesRef.current = [];
     frameRef.current = 0;
     setScore(0);
@@ -50,11 +48,12 @@ export const FlappyGame: React.FC<FlappyGameProps> = ({ onComplete }) => {
     // Bird Physics
     birdRef.current.velocity += GRAVITY;
     birdRef.current.y += birdRef.current.velocity;
-    birdRef.current.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (birdRef.current.velocity * 0.1)));
+    // Smoother rotation
+    birdRef.current.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (birdRef.current.velocity * 0.12)));
 
     // Pipe Spawning
     if (frameRef.current % PIPE_SPAWN_RATE === 0) {
-        const gap = 150;
+        const gap = 160; // Slightly larger gap for playability at speed
         const minPipe = 50;
         const maxPipe = canvas.height - gap - minPipe;
         const topHeight = Math.floor(Math.random() * (maxPipe - minPipe + 1)) + minPipe;
@@ -65,16 +64,18 @@ export const FlappyGame: React.FC<FlappyGameProps> = ({ onComplete }) => {
     pipesRef.current.forEach(p => p.x -= PIPE_SPEED);
     if (pipesRef.current.length > 0 && pipesRef.current[0].x < -60) pipesRef.current.shift();
 
-    // Collision
+    // Collision Logic
     const birdRadius = 15;
     const hitBottom = birdRef.current.y + birdRadius >= canvas.height;
     const hitTop = birdRef.current.y - birdRadius <= 0;
     
     let hitPipe = false;
     pipesRef.current.forEach(pipe => {
-        const pipeRight = pipe.x + 50;
-        const gap = 150;
-        if (birdRef.current.x + birdRadius > pipe.x && birdRef.current.x - birdRadius < pipeRight) {
+        const pipeRight = pipe.x + 52; // Width of pipe
+        const gap = 160;
+        
+        // Simple AABB collision with margin
+        if (birdRef.current.x + birdRadius > pipe.x + 4 && birdRef.current.x - birdRadius < pipeRight - 4) {
             if (birdRef.current.y - birdRadius < pipe.topHeight || birdRef.current.y + birdRadius > pipe.topHeight + gap) {
                 hitPipe = true;
             }
@@ -116,24 +117,29 @@ export const FlappyGame: React.FC<FlappyGameProps> = ({ onComplete }) => {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Pipes
-      ctx.fillStyle = '#1e293b'; // Slate 800
-      ctx.strokeStyle = '#475569';
-      ctx.lineWidth = 2;
-
-      const gap = 150;
+      const gap = 160;
       pipesRef.current.forEach(pipe => {
+          // Pipe Style
+          ctx.fillStyle = '#1e293b'; // Slate 800
+          ctx.strokeStyle = '#475569';
+          ctx.lineWidth = 3;
+
           // Top Pipe
-          ctx.fillRect(pipe.x, 0, 50, pipe.topHeight);
+          ctx.fillRect(pipe.x, 0, 52, pipe.topHeight);
+          ctx.strokeRect(pipe.x, 0, 52, pipe.topHeight);
+          
           // Bottom Pipe
           const bottomY = pipe.topHeight + gap;
-          ctx.fillRect(pipe.x, bottomY, 50, canvas.height - bottomY);
-          
-          // Details
-          ctx.strokeRect(pipe.x, 0, 50, pipe.topHeight);
-          ctx.strokeRect(pipe.x, bottomY, 50, canvas.height - bottomY);
+          ctx.fillRect(pipe.x, bottomY, 52, canvas.height - bottomY);
+          ctx.strokeRect(pipe.x, bottomY, 52, canvas.height - bottomY);
+
+          // Pipe Cap detail
+          ctx.fillStyle = '#334155';
+          ctx.fillRect(pipe.x - 2, pipe.topHeight - 20, 56, 20);
+          ctx.fillRect(pipe.x - 2, bottomY, 56, 20);
       });
 
-      // Bird (Geometric)
+      // Bird
       ctx.save();
       ctx.translate(birdRef.current.x, birdRef.current.y);
       ctx.rotate(birdRef.current.rotation);
@@ -158,6 +164,14 @@ export const FlappyGame: React.FC<FlappyGameProps> = ({ onComplete }) => {
       ctx.fillStyle = '#f59e0b'; // Amber 500
       ctx.beginPath();
       ctx.ellipse(-5, 5, 8, 5, 0, 0, Math.PI*2);
+      ctx.fill();
+      
+      // Beak
+      ctx.fillStyle = '#f97316';
+      ctx.beginPath();
+      ctx.moveTo(10, 2);
+      ctx.lineTo(20, 6);
+      ctx.lineTo(10, 10);
       ctx.fill();
 
       ctx.restore();

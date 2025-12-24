@@ -3,7 +3,7 @@
 // ==============================================================================
 
 // CÓDIGO DO VOUCHER
-export const VOUCHER_CODE = "XBX-HUGO-2412-TURBO";
+export const VOUCHER_CODE = "FP9MM-W7G2F-27Q2X-G4Y7T-2GJ2Z";
 
 // SONS
 export const SOUNDS = {

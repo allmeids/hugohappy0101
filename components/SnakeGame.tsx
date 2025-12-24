@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { SOUNDS, COLORS } from '../constants';
+import { SOUNDS } from '../constants';
 import { Play, RotateCcw, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface SnakeGameProps {
@@ -35,7 +35,8 @@ export const SnakeGame: React.FC<SnakeGameProps> = ({ onComplete }) => {
   const update = useCallback((time: number) => {
     if (gameOver || !isPlaying) return;
 
-    const speed = 130; // ms per frame
+    // Increased speed: 80ms per frame instead of 130ms for 60fps feel in grid movement
+    const speed = 80; 
     const secondsSinceLastRender = (time - lastRenderTimeRef.current) / 1000;
     
     if (secondsSinceLastRender < speed / 1000) {
@@ -267,13 +268,13 @@ export const SnakeGame: React.FC<SnakeGameProps> = ({ onComplete }) => {
         </div>
 
         {/* Mobile D-Pad */}
-        <div className="grid grid-cols-3 gap-2 pb-6 md:hidden">
+        <div className="grid grid-cols-3 gap-2 pb-6 md:hidden mt-4">
             <div />
-            <button className="bg-slate-700 p-4 rounded-xl active:bg-emerald-600 shadow-lg text-white" onClick={() => handleMobileControl(0, -1)}><ArrowUp /></button>
+            <button className="bg-slate-700 p-6 rounded-2xl active:bg-emerald-600 shadow-lg text-white" onClick={() => handleMobileControl(0, -1)}><ArrowUp size={24}/></button>
             <div />
-            <button className="bg-slate-700 p-4 rounded-xl active:bg-emerald-600 shadow-lg text-white" onClick={() => handleMobileControl(-1, 0)}><ArrowLeft /></button>
-            <button className="bg-slate-700 p-4 rounded-xl active:bg-emerald-600 shadow-lg text-white" onClick={() => handleMobileControl(0, 1)}><ArrowDown /></button>
-            <button className="bg-slate-700 p-4 rounded-xl active:bg-emerald-600 shadow-lg text-white" onClick={() => handleMobileControl(1, 0)}><ArrowRight /></button>
+            <button className="bg-slate-700 p-6 rounded-2xl active:bg-emerald-600 shadow-lg text-white" onClick={() => handleMobileControl(-1, 0)}><ArrowLeft size={24}/></button>
+            <button className="bg-slate-700 p-6 rounded-2xl active:bg-emerald-600 shadow-lg text-white" onClick={() => handleMobileControl(0, 1)}><ArrowDown size={24}/></button>
+            <button className="bg-slate-700 p-6 rounded-2xl active:bg-emerald-600 shadow-lg text-white" onClick={() => handleMobileControl(1, 0)}><ArrowRight size={24}/></button>
         </div>
     </div>
   );
