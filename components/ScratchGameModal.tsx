@@ -72,6 +72,7 @@ const shuffle = (array: any[]) => {
 export const ScratchGameModal: React.FC<ScratchGameModalProps> = ({ isOpen, onClose, onWin }) => {
     const [currentStageIndex, setCurrentStageIndex] = useState(0);
     const [scratchedCount, setScratchedCount] = useState(0);
+    const [revealedIndices, setRevealedIndices] = useState<Set<number>>(new Set());
     const [roundComplete, setRoundComplete] = useState(false);
     const [shuffledSymbols, setShuffledSymbols] = useState<any[]>([]);
     const [forceRevealAll, setForceRevealAll] = useState(false);
@@ -82,17 +83,37 @@ export const ScratchGameModal: React.FC<ScratchGameModalProps> = ({ isOpen, onCl
         if (isOpen) {
             setShuffledSymbols(shuffle(currentStage.symbols));
             setScratchedCount(0);
+            setRevealedIndices(new Set());
             setRoundComplete(false);
             setForceRevealAll(false);
         }
     }, [currentStageIndex, isOpen]);
 
-    const handleScratch = () => {
-        const newCount = scratchedCount + 1;
-        setScratchedCount(newCount);
+    const handleScratch = (index: number) => {
+        if (revealedIndices.has(index) || roundComplete) return;
 
-        // If all squares scratched
-        if (newCount >= 6) {
+        const newRevealed = new Set(revealedIndices).add(index);
+        setRevealedIndices(newRevealed);
+        setScratchedCount(newRevealed.size);
+
+        // Check for immediate win (if we found 3 winning symbols)
+        if (currentStage.isWin) {
+            const winningFound = currentStage.symbols.filter((sym, idx) => 
+                newRevealed.has(idx) && sym.id.startsWith('win')
+            ).length;
+
+            // If we found 3 winning symbols, trigger win immediately
+            if (winningFound >= 3) {
+                 // Slight delay for user to realize they saw the 3rd symbol
+                 setTimeout(() => {
+                    handleRoundComplete();
+                 }, 500);
+                 return;
+            }
+        }
+
+        // Standard completion (all scratched)
+        if (newRevealed.size >= 6) {
             handleRoundComplete();
         }
     };
@@ -164,7 +185,7 @@ export const ScratchGameModal: React.FC<ScratchGameModalProps> = ({ isOpen, onCl
                                 id={index}
                                 isLocked={false}
                                 prize={<div className="scale-110 transform">{item.icon}</div>}
-                                onScratchComplete={handleScratch}
+                                onScratchComplete={() => handleScratch(index)}
                                 forceReveal={forceRevealAll}
                                 className="w-full h-full rounded-xl border-2 border-slate-600 shadow-lg"
                             />

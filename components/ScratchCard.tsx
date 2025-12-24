@@ -15,6 +15,7 @@ export const ScratchCard: React.FC<ScratchCardProps> = ({ id, isLocked, prize, o
     const containerRef = useRef<HTMLDivElement>(null);
     const [isRevealed, setIsRevealed] = useState(false);
     const [isScratching, setIsScratching] = useState(false);
+    const [isReady, setIsReady] = useState(false); // New state to prevent prize flicker
 
     // Watch for forceReveal prop
     useEffect(() => {
@@ -80,10 +81,13 @@ export const ScratchCard: React.FC<ScratchCardProps> = ({ id, isLocked, prize, o
             ctx.fillText("RASPE", width/2, height/2);
             
             ctx.shadowBlur = 0;
+            
+            // Mark as ready only after paint is done
+            setIsReady(true);
         };
 
-        initCanvas();
-        const timeout = setTimeout(initCanvas, 100);
+        // Small timeout to ensure container has layout
+        const timeout = setTimeout(initCanvas, 50);
         window.addEventListener('resize', initCanvas);
 
         return () => {
@@ -155,8 +159,8 @@ export const ScratchCard: React.FC<ScratchCardProps> = ({ id, isLocked, prize, o
 
     return (
         <div ref={containerRef} className={`relative bg-white overflow-hidden shadow-inner transform transition-transform select-none ${className} ${isRevealed ? 'bg-indigo-50' : 'bg-slate-200'}`}>
-            {/* O Prêmio */}
-            <div className={`absolute inset-0 flex items-center justify-center p-2 text-center ${isRevealed ? 'animate-in zoom-in duration-300' : ''}`}>
+            {/* O Prêmio - Only visible when canvas is ready (painted) */}
+            <div className={`absolute inset-0 flex items-center justify-center p-2 text-center transition-opacity duration-300 ${isReady ? 'opacity-100' : 'opacity-0'} ${isRevealed ? 'animate-in zoom-in duration-300' : ''}`}>
                 {prize}
             </div>
 
